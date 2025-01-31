@@ -8,3 +8,5 @@ El recorrido eficiente puede encontrase mediante fuerza burta, es decir, probar 
 La base de datos es un archivo formato .xlsx, el cual contiene las 23 provincias argentinas con sus capitales, además de la latitud y longiutd de cada una.
 
 Los paquetes de R necesarios para este ejercicio son: 'TSP', 'maps' y 'geosphere'.
+
+Concluyo que el agortimo más eficiente es CLA, a pesar de que varía su respuesta, siempre es menor a RNNA (y por extensión a NNA). El recorrido es de 5.759, 75 Km, empezando por Rawson y terminando en Viedma (antes de volver a Rawson).
