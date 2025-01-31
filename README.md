@@ -5,4 +5,6 @@ El recorrido eficiente puede encontrase mediante fuerza burta, es decir, probar 
 . Recursive Nearest Neighbor Algorithm (RNNA): este método es una variante del anterior, con la diferencia de que inicia el recorrido por todos los puntos origen e itera NNA, terminando seleccionando el recorrdio más corto.
 . Cheapest-Link Algorithm (CLA): este consiste en ordenar las distancias entre las ciudades de menor a mayor. Se empieza por el recorrido más corto, y así sucesivamente pero con las condiciones de que 1- ) este no debe cerrar el circuito sin haber cubierto todos los puntos y 2-) cada punto no puede tener más de dos arcos. Este proceso se repite hasta que se complete la ruta.
 
+La base de datos es un archivo formato .xlsx, el cual contiene las 23 provincias argentinas con sus capitales, además de la latitud y longiutd de cada una.
+
 Los paquetes de R necesarios para este ejercicio son: 'TSP', 'maps' y 'geosphere'.
