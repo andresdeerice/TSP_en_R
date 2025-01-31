@@ -1,0 +1,132 @@
+---
+title: "Viaje por Argentina"
+output: html_notebook
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+options(scpien = 999)
+```
+
+```{r, include = FALSE}
+paquetes <- c('tidyverse', # incluye varios paquetes que facilitan la manipulación de datos (dplyr), gráficos (ggplot2) etc
+              'readxl', #para leer achivos .xlsx
+              'TSP', #para resolver este tipo de problemas (travellins salesman problem)
+              'maps', # Dibujar mapas
+              'geosphere') # Trabajr con datos geoespaciales
+              
+instalados <- paquetes %in% installed.packages()
+
+if(sum(instalados == FALSE) > 0) {
+  install.packages(paquetes[!instalados])
+}
+
+lapply(paquetes, require, character.only = TRUE)
+```
+
+```{r, include = FALSE}
+library("tidyverse")
+library("readxl")
+library("TSP")
+library("maps")
+library("geosphere")
+```
+
+Para este ejercicio queremos encontrar el camino más eficiente para recorrer todas las capitales de Argentina, es decir, encontrar aquel recorrido que minimice de manera aproximada la cantidad de km a recorrer para visitar una vez todas las capitales, y volver a la primera.  Para esto, utilizaremos tres algortimos heurísiticos: Nearest Neighbor Algorithm (NNA), Repetitve Nearest Neighbor Algorithm (RNNA) y Cheapest-link Algorithm (CLA).Estos tres son algoritmos de aproximación, que no buscan el resultado óptimo, sino más bien una buena aproximación a un buen costo computacional.
+
+```{r}
+setwd("C:/Users/Andres/OneDrive/Documents/Andrés/DA/R/Proyectos/Argentina")
+```
+
+```{r}
+capital <- read_excel("C:/Users/Andres/OneDrive/Documents/Andrés/DA/R/Proyectos/Argentina/Capitales Provinciales.xlsx")
+head(capital, n = Inf)
+```
+Vemos todas las capitales provinciales. Pero no voy a requerir la primera columna, con el nombre de la provincia, por lo que
+
+```{r}
+capital_2 <- as.data.frame(select(capital, -Provincia))
+head(capital_2)
+```
+
+Luego, tomo las latitudes y longitudes para crear una matriz de distancias usando la fórmula de Haversine.
+
+```{r}
+distancias <- distm(capital_2[, c("Latitud", "Longitud")], fun = distHaversine)
+```
+
+Luego de crear la matriz con las distancias entre capitales, debemos transformar al objeto en formato TSP (en Kilómetros)
+
+```{r}
+distancias_tsp <- TSP(distancias)/1000
+```
+
+Ahora utilizaré los algortimos heurísticos para resolver este problema:
+
+```{r}
+viaje_nna <- solve_TSP(distancias_tsp, method = "nn")
+NNA <- tour_length(viaje_nna)
+viaje_rnna <- solve_TSP(distancias_tsp, method = "repetitive_nn")
+RNNA <- tour_length(viaje_rnna)
+viaje_cla <- solve_TSP(distancias_tsp, method = "cheapest_insertion")
+CLA <- tour_length(viaje_cla)
+            
+comparacion_km <- data.frame(NNA, RNNA, CLA)
+rownames(comparacion_km) <- "KM"
+round(t(comparacion_km),2)
+```
+
+Si queremos cómo ordena las ciudades cada algortimo hacemos:
+
+```{r}
+orden_nna <- print(capital_2[c(viaje_nna, viaje_nna[1]),], n = Inf)
+orden_rnna <- print(capital_2[c(viaje_rnna, viaje_rnna[1]),], n = Inf)
+orden_cla <- print(capital_2[c(viaje_cla, viaje_cla[1]),], n = Inf)
+```
+
+Lo vemos en un cuadro de comparación:
+
+```{r}
+comparacion_recorrido <- data.frame(NNA = orden_nna$Capital, RNNA = orden_rnna$Capital, CLA = orden_cla$Capital)
+comparacion_recorrido
+```
+
+Graficamos el recorrido con cada algortimo:
+
+- NNA:
+
+```{r}
+mapa_arg_nna <- function () {
+plot((capital_2[,c("Longitud", "Latitud")]), cex = .3, main = "Recorrido Argentina con NNA")
+map("world", regions = "Argentina", col = "blue", fill = FALSE, add = TRUE)
+polygon(capital_2[ ,c("Longitud", "Latitud")][viaje_nna, ], border = "black")
+}
+
+mapa_arg_nna()
+```
+
+- RNNA:
+
+```{r}
+mapa_arg_rnna <- function () {
+plot((capital_2[,c("Longitud", "Latitud")]), cex = .3, main = "Recorrido Argentina con RNNA")
+map("world", regions = "Argentina", col = "blue", fill = FALSE, add = TRUE)
+polygon(capital_2[ ,c("Longitud", "Latitud")][viaje_rnna, ], border = "black")
+}
+
+mapa_arg_rnna()
+```
+
+- CLA:
+
+```{r}
+mapa_arg_cla <- function () {
+plot((capital_2[,c("Longitud", "Latitud")]), cex = .3, main = "Recorrido Argentina con CLA")
+map("world", regions = "Argentina", col = "blue", fill = FALSE, add = TRUE)
+polygon(capital_2[ ,c("Longitud", "Latitud")][viaje_cla, ], border = "black")
+}
+
+mapa_arg_cla()
+```
+
+En conlusión, obtenemos que el menor recorrido posible para pasar una vez por todas las capitales de Argentina es el propuesto por el algortimo CLA, el cual tiene un recorrido menor que RNNA (y por extensión NNA). A pesar de que en cada ejecución el recorrido final varía, se mantiene que CLA < RNNA <= NNA.
